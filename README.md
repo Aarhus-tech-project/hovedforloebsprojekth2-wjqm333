@@ -2,7 +2,7 @@
 
 Et simpelt turneringssystem hvor man kan oprette brugere, turneringer og kampe.
 
-## Teknologier
+## Hvad jeg har brugt
 - React + Vite (frontend)
 - SvelteKit (tidligere frontend)
 - ASP.NET Core C# (backend)
