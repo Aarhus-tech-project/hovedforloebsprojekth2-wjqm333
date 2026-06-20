@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opret kamp</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="utils.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <button id="logoutBtn">Log ud</button>
+      <button id="backBtn">Tilbage til turnering</button>
+    </div>
+
+    <div class="card">
+      <h2>Opret kamp</h2>
+      <form id="createMatchForm">
+        <label for="player1Select">Spiller 1</label>
+        <select id="player1Select" required></select>
+
+        <label for="player2Select">Spiller 2</label>
+        <select id="player2Select" required></select>
+
+        <button type="submit">Opret kamp</button>
+      </form>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+      <h3>Registrer resultat</h3>
+      <p>Kamp‑ID: <span id="matchId"></span></p>
+      <form id="resultForm">
+        <label for="winnerSelect">Vinder</label>
+        <select id="winnerSelect" required></select>
+        <button type="submit">Gem resultat</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { api, getUserId, requireAuth, showToast, logout, getQueryParam } from './utils.js';
+    requireAuth();
+
+    const tournamentId = parseInt(getQueryParam('tournamentId'));
+    const logoutBtn = document.getElementById('logoutBtn');
+    const backBtn   = document.getElementById('backBtn');
+    const player1Select = document.getElementById('player1Select');
+    const player2Select = document.getElementById('player2Select');
+    const winnerSelect = document.getElementById('winnerSelect');
+    const createForm = document.getElementById('createMatchForm');
+    const resultCard = document.getElementById('resultCard');
+    const resultForm = document.getElementById('resultForm');
+    const matchIdSpan = document.getElementById('matchId');
+
+    logoutBtn.addEventListener('click', logout);
+    backBtn.addEventListener('click', () => location.href = `tournament.html?id=${tournamentId}`);
+
+    // Load players for the tournament and populate dropdowns
+    async function loadPlayers() {
+      try {
+        const tournament = await api(`/api/Tournament/${tournamentId}`);
+        const players = tournament.players || [];
+        // Helper to add <option>
+        const addOptions = (select) => {
+          select.innerHTML = '';
+          players.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id || p.userId || p.userId || p.userId; // fallbacks
+            opt.textContent = p.username || p.userName || p.id;
+            select.appendChild(opt);
+          });
+        };
+        addOptions(player1Select);
+        addOptions(player2Select);
+        // winner dropdown will be filled after match creation
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    createForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const p1 = parseInt(player1Select.value);
+      const p2 = parseInt(player2Select.value);
+      if (p1 === p2) {
+        showToast('Vælg to forskellige spillere.', true);
+        return;
+      }
+      try {
+        const payload = { TournamentId: tournamentId, Player1Id: p1, Player2Id: p2 };
+        const res = await api('/api/Match', 'POST', payload);
+        showToast('Kamp oprettet!');
+        // Show result section
+        matchIdSpan.textContent = res.id;
+        // Populate winner dropdown with the two selected players
+        winnerSelect.innerHTML = '';
+        [p1, p2].forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          const name = (player1Select.value == id) ? player1Select.selectedOptions[0].textContent : player2Select.selectedOptions[0].textContent;
+          opt.textContent = name;
+          winnerSelect.appendChild(opt);
+        });
+        resultCard.style.display = 'block';
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+
+    resultForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const matchId = parseInt(matchIdSpan.textContent);
+      const winnerId = parseInt(winnerSelect.value);
+      try {
+        await api(`/api/Match/${matchId}/result`, 'PUT', { WinnerId: winnerId });
+        showToast('Resultat gemt!');
+        setTimeout(() => location.href = `tournament.html?id=${tournamentId}`, 1500);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+
+    // Initial load
+    loadPlayers();
+  </script>
+</body>
+</html>

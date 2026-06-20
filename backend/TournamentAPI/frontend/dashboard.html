@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="utils.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <button id="logoutBtn">Log ud</button>
+    </div>
+    <div class="card">
+      <h2>Turneringer</h2>
+      <button id="createBtn">Opret ny turnering</button>
+      <div id="tournamentList"></div>
+    </div>
+  </div>
+  <script type="module">
+    import { api, getUserId, requireAuth, showToast, logout } from './utils.js';
+    requireAuth();
+    const listEl = document.getElementById('tournamentList');
+    const createBtn = document.getElementById('createBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', logout);
+
+    async function loadTournaments() {
+      try {
+        const tournaments = await api('/api/Tournament');
+        listEl.innerHTML = '';
+        tournaments.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <h3>${t.name}</h3>
+            <p>Spil: ${t.game}</p>
+            <p>Oprettet af: ${t.createdBy}</p>
+            <button data-id="${t.id}">Vis</button>
+          `;
+          card.querySelector('button').addEventListener('click', () => {
+            location.href = `tournament.html?id=${t.id}`;
+          });
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    createBtn.addEventListener('click', () => {
+      location.href = 'createTournament.html';
+    });
+
+    loadTournaments();
+  </script>
+</body>
+</html>

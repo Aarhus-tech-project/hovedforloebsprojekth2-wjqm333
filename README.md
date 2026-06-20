@@ -1,1 +1,21 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/yxSxf8qT)
+# Tournament.GG
+
+Et simpelt turneringssystem hvor man kan oprette brugere, turneringer og kampe.
+
+## Teknologier
+- React + Vite (frontend)
+- SvelteKit (tidligere frontend)
+- ASP.NET Core C# (backend)
+- SQL Server (database)
+- Nginx på Linux (server)
+
+## Ændringer
+Startede med SvelteKit som frontend, men fik hjælp til at skifte over til React da det var nemmere at arbejde med i dette projekt.
+
+Alt React koden lå i én stor fil (App.jsx) på næsten 1000 linjer.
+Delte den op i mindre filer så det er nemmere at finde rundt i:
+
+- `api.js` – sender requests til backend
+- `styles.js` – al CSS
+- `components/UI.jsx` – navbar, knapper og alerts
+- `pages/` – én fil per side (login, dashboard, turnering osv.)
