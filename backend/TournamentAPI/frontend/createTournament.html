@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opret Turnering</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="utils.js"></script>
+</head>
+<body>
+  <header class="nav"><h1>Turnerings‑App</h1><button id="logoutBtn">Log ud</button></header>
+  <div class="container">
+    <div class="card">
+      <h2>Opret ny turnering</h2>
+      <form id="createForm">
+        <label for="name">Navn</label>
+        <input type="text" id="name" name="name" required />
+
+        <label for="game">Spil</label>
+        <input type="text" id="game" name="game" required />
+
+        <button type="submit">Opret</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { api, getUserId, requireAuth, showToast, logout } from './utils.js';
+    requireAuth();
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    const form = document.getElementById('createForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const game = document.getElementById('game').value.trim();
+      const userId = getUserId();
+      if (!name || !game) {
+        showToast('Udfyld alle felter', true);
+        return;
+      }
+      try {
+        await api('/api/Tournament', 'POST', {
+          Name: name,
+          Game: game,
+          CreatedByUserId: parseInt(userId)
+        });
+        showToast('Turnering oprettet!');
+        // redirect back to dashboard after short delay
+        setTimeout(() => location.href = 'dashboard.html', 1500);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

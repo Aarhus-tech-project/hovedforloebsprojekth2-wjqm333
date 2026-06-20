@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turnering</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="utils.js"></script>
+</head>
+<body>
+  <header class="nav"><h1>Turnerings‑App</h1><button id="logoutBtn">Log ud</button></header>
+  <div class="container">
+    <div class="card" id="tournamentCard">
+      <h2 id="tournamentName"></h2>
+      <p id="tournamentGame"></p>
+      <p>Oprettet af: <span id="createdBy"></span></p>
+      <button id="joinBtn">Tilmeld dig</button>
+    </div>
+    <div class="card" id="playersCard">
+      <h3>Spillere</h3>
+      <ul id="playersList"></ul>
+    </div>
+    <div class="card" id="matchesCard">
+      <h3>Kampe</h3>
+      <ul id="matchesList"></ul>
+      <button id="createMatchBtn">Opret kamp</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { api, getUserId, requireAuth, showToast, getQueryParam, logout } from './utils.js';
+    requireAuth();
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    const tournamentId = parseInt(getQueryParam('id'));
+    const tournamentNameEl = document.getElementById('tournamentName');
+    const tournamentGameEl = document.getElementById('tournamentGame');
+    const createdByEl = document.getElementById('createdBy');
+    const joinBtn = document.getElementById('joinBtn');
+    const playersList = document.getElementById('playersList');
+    const matchesList = document.getElementById('matchesList');
+    const createMatchBtn = document.getElementById('createMatchBtn');
+
+    async function loadTournament() {
+      try {
+        const t = await api(`/api/Tournament/${tournamentId}`);
+        tournamentNameEl.textContent = t.name;
+        tournamentGameEl.textContent = `Spil: ${t.game}`;
+        createdByEl.textContent = t.createdBy;
+        // Populate players
+        playersList.innerHTML = '';
+        t.players.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = p.username || p.userName || p.id;
+          playersList.appendChild(li);
+        });
+        // Populate matches
+        loadMatches();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function loadMatches() {
+      try {
+        const matches = await api(`/api/Match/tournament/${tournamentId}`);
+        matchesList.innerHTML = '';
+        matches.forEach(m => {
+          const li = document.createElement('li');
+          li.textContent = `${m.player1} vs ${m.player2} – ${m.winner}`;
+          matchesList.appendChild(li);
+        });
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    joinBtn.addEventListener('click', async () => {
+      try {
+        await api(`/api/Tournament/${tournamentId}/join`, 'POST', { userId: parseInt(getUserId()) });
+        showToast('Tilmeldt turneringen!');
+        loadTournament();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+
+    createMatchBtn.addEventListener('click', () => {
+      // redirect to match creation page with tournament id
+      location.href = `match.html?tournamentId=${tournamentId}`;
+    });
+
+    loadTournament();
+  </script>
+</body>
+</html>
